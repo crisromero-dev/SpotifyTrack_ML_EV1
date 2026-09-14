@@ -99,16 +99,15 @@ Para garantizar la calidad del entrenamiento de los modelos, el plan de preproce
 ---
 
 ## 10. Análisis de Sesgos
-* **Sesgo de Selección / Muestreo:** La estructura del dataset fuerza una representación idéntica (1,000 temas por género) para 114 categorías. Esto no refleja la distribución real del mercado de streaming, donde ciertos géneros (Pop, Reggaetón, Hip-Hop) dominan abrumadoramente el consumo masivo global frente a géneros nicho (Jazz, Clásica, Ambient).
-* **Sesgo por Factores Causalidad No Observada:** La popularidad real de una canción está fuertemente influenciada por factores externos al archivo de audio (presupuesto de marketing, viralidad en redes sociales como TikTok, popularidad previa del artista). Un modelo basado solo en métricas de audio puede subestimar estos fenómenos exógenos.
-* **Sesgo de Dominancia de Artistas:** La presencia desproporcionada de ciertos artistas icónicos en el conjunto de datos puede distorsionar las predicciones si el nombre del artista es incluido como predictor sin una regularización adecuada.
+* **Sesgo por Factores de Causalidad No Observada:** La popularidad real de una canción está fuertemente influenciada por factores externos al archivo de audio (presupuesto de marketing, viralidad en redes sociales como TikTok, popularidad previa del artista). Un modelo basado solo en métricas de audio puede subestimar estos fenómenos exógenos, ya que ninguno de ellos está registrado en el dataset.
+* **Sesgo de Alcance Limitado a Spotify:** El dataset solo contiene canciones que efectivamente fueron publicadas y distribuidas en Spotify, dejando fuera música no distribuida digitalmente, lanzamientos independientes sin llegada a plataformas de streaming, o contenido retirado del catálogo. Esto implica que el modelo no aprende qué hace popular a una canción en términos absolutos, sino qué hace popular a una canción **dentro del universo de música que ya logró entrar a Spotify** — su capacidad de generalizar fuera de ese universo es limitada.
 
 ---
 
 ## 11. Consideraciones de Ética y Privacidad
-* **Privacidad de Datos:** Los datos analizados corresponden a metadatos y métricas públicas expuestas por la API web de Spotify, por lo que no comprometen la privacidad ni contienen datos personales identificables (PII) de oyentes ni de usuarios.
-* **Transparencia en Decisiones Algorítmicas:** En el evento de utilizar este modelo como herramienta de apoyo en la industria discográfica (ej. A&R o selección de sencillos), es crucial evitar que las predicciones actúen como un "filtro restrictivo" que discrimine o desincentive géneros menos populares o artistas independientes.
-* **Derechos de Autor e Propiedad Intelectual:** El uso de características cuantitativas de audio tiene fines exclusivamente analíticos y predictivos, respetando los términos de servicio de las APIs de streaming y los derechos de propiedad intelectual de los creadores musicales.
+* **Privacidad de Datos y Artistas:** Los datos analizados corresponden a metadatos y métricas públicas expuestas por la API web de Spotify, por lo que no comprometen la privacidad ni contienen datos personales identificables (PII) de oyentes o usuarios. Sin embargo, la columna `artists` sí identifica a personas reales (31,437 artistas únicos); aunque sea información pública, se excluye explícitamente como variable predictiva para evitar que el modelo asocie la popularidad a la identidad del artista en lugar de a las características musicales del track.
+* **Riesgo de Uso Indebido (Dual-Use):** Un modelo de este tipo puede usarse legítimamente como apoyo a decisiones de promoción, pero también podría emplearse para filtrar automáticamente qué artistas fichar o promocionar, replicando y amplificando los sesgos de género y mercado ya identificados sin intervención humana. Se recomienda que el modelo se utilice únicamente como herramienta de apoyo a la decisión, no como filtro automático de decisiones artísticas.
+* **Explicabilidad como Responsabilidad Ética:** Dado que las predicciones pueden influir en decisiones que afectan el sustento de un artista, la elección del modelo final debería sopesar precisión contra interpretabilidad: un modelo como Regresión Lineal/Ridge es transparente en sus coeficientes, mientras que XGBoost, pese a ofrecer mayor precisión, es más difícil de auditar. Esta tensión debe considerarse explícitamente al seleccionar el modelo de producción.
 
 
 ---
@@ -117,14 +116,14 @@ Para garantizar la calidad del entrenamiento de los modelos, el plan de preproce
 
 Para asegurar que la manipulación de los datos no introduzca sesgos técnicos ni errores en el modelado, se establecen las siguientes directrices y resguardos:
 
-### ⚠️ Precauciones y Buenas Prácticas de Data Leakage
+### Precauciones y Buenas Prácticas de Data Leakage
 * **Prevención de Data Leakage (Fuga de Datos):** Todo el proceso de transformación (escalado con `StandardScaler`, imputación de valores faltantes y codificación de variables categóricas) **debe ajustarse (*fit*) exclusivamente con el subconjunto de entrenamiento (Train)** y solo aplicarse (*transform*) sobre el conjunto de prueba (Test).
 * **Filtro de Metadatos No Predictivos:** Variables de identificación única como `track_id` y `Unnamed: 0` deben eliminarse antes del modelado, ya que no aportan valor explicativo y podrían causar sobreajuste.
 
-### 🧹 Protocolo de Tratamiento de Anomalías (Outliers y Inconsistencias)
+### Protocolo de Tratamiento de Anomalías (Outliers y Inconsistencias)
 * **Valores Nulos:** Dado que solo existe 1 fila con valores faltantes en `artists`, `album_name` y `track_name`, la precaución estándar es eliminar esa fila directamente para no comprometer el código con imputaciones complejas innecesarias.
 * **Canciones con Duración Anormal (`duration_ms`):** Filtrar o revisar registros con duraciones extremadamente cortas ($< 30.000\text{ ms}$) o excesivamente largas ($> 15\text{ minutos}$), ya que corresponden a podcasts, fragmentos incompletos o pistas de audio ambiental que distorsionan el aprendizaje del algoritmo.
 * **Inconsistencias en Ritmo (`tempo = 0 BPM`):** Se deben imputar o remover los registros donde el tempo es exactamente 0.0 BPM, pues representan errores de captura de la API o pistas sin estructura rítmica clara.
 
-### ⚖️ Precaución con la Variable Categórica `track_genre`
+### Precaución con la Variable Categórica `track_genre`
 * **Alta Dimensionalidad:** La variable `track_genre` contiene 114 categorías. Al aplicar *One-Hot Encoding*, el dataset se expandirá sustancialmente en número de columnas. Se recomienda evaluar técnicas de reducción de dimensionalidad o *Target Encoding* si el tiempo de entrenamiento de modelos como *Random Forest* o *XGBoost* se eleva drásticamente.
