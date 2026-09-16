@@ -1,10 +1,10 @@
 # Predicción de Popularidad de Canciones — Spotify Tracks
 
-**Asignatura:** MLY1101 — Machine Learning
-**Evaluación:** Parcial N°1 — Presentación y defensa técnica del proyecto
-**Caso:** C — Inteligencia musical y predicción de popularidad de canciones (Spotify Tracks)
-**Equipo:** 05 Cristian Romero y Rolando Paredes
-**Notebook:** `SpotifyTrack_ML_EV1.ipynb`
+- **Asignatura:** MLY1101 — Machine Learning
+- **Evaluación:** Parcial N°1 — Presentación y defensa técnica del proyecto
+- **Caso:** C — Inteligencia musical y predicción de popularidad de canciones (Spotify Tracks)
+- **Equipo:** 05 Cristian Romero y Rolando Paredes
+- **Notebook:** `SpotifyTrack_ML_EV1.ipynb`
 
 ---
 
